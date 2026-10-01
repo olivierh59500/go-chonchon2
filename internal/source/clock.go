@@ -35,9 +35,7 @@ func NewClock(bg, font, message, profile, panel, pathA, pathB []byte) (*Clock, e
 }
 func (c *Clock) Step() {
 	c.Tick++
-	if c.Tick%2 == 0 {
-		return
-	}
+	// One authored motion sample is consumed on every 50 Hz simulation tick.
 	copy(c.Screen[:], c.Background)
 	if c.ProfileCursor+6 > len(c.Profile) || int16(binary.BigEndian.Uint16(c.Profile[c.ProfileCursor:])) < 0 {
 		c.ProfileCursor = 0
@@ -138,14 +136,17 @@ func (c *Clock) pixel(x, y int, v byte) {
 	}
 }
 func (c *Clock) Pixels(dst []byte) {
-	for y := 0; y < 200; y++ {
-		for x := 0; x < 320; x++ {
-			var v byte
-			for p := 0; p < 4; p++ {
-				w := binary.BigEndian.Uint16(c.Screen[y*160+x/16*8+p*2:])
-				v |= byte(w>>uint(15-x%16)&1) << p
-			}
-			i := (y*320 + x) * 4
+	// Load each planar word once for all sixteen pixels in its group.
+	for group := 0; group < 4000; group++ {
+		at := group * 8
+		p0 := binary.BigEndian.Uint16(c.Screen[at:])
+		p1 := binary.BigEndian.Uint16(c.Screen[at+2:])
+		p2 := binary.BigEndian.Uint16(c.Screen[at+4:])
+		p3 := binary.BigEndian.Uint16(c.Screen[at+6:])
+		for x := 0; x < 16; x++ {
+			shift := uint(15 - x)
+			v := byte(p0>>shift&1 | (p1>>shift&1)<<1 | (p2>>shift&1)<<2 | (p3>>shift&1)<<3)
+			i := (group*16 + x) * 4
 			dst[i], dst[i+1], dst[i+2], dst[i+3] = v*17, 0, 0, 255
 		}
 	}

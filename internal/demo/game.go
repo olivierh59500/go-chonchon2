@@ -23,7 +23,7 @@ const Width, Height, FPS = 320, 200, 50
 
 type Game struct {
 	clock                                                     *source.Clock
-	image, stage                                              *ebiten.Image
+	image, stage, colored                                     *ebiten.Image
 	sprites                                                   [2]*ebiten.Image
 	lookup                                                    *composite.IndexedPalette
 	slots                                                     *sprites.ImageSlots
@@ -90,6 +90,7 @@ func NewGame(mute bool) (_ *Game, err error) {
 	}
 	g.image = ebiten.NewImage(Width, Height)
 	g.stage = ebiten.NewImage(Width, Height)
+	g.colored = ebiten.NewImage(Width, Height)
 	g.slots, err = sprites.NewImageSlots(sprites.ImageSlotsConfig{Images: g.sprites[:], MaxSlots: 34})
 	if err != nil {
 		return nil, err
@@ -168,7 +169,7 @@ func (g *Game) Update() error {
 		for row := range slots {
 			sourceY := row
 			if i == 1 && row >= 2 && row < 32 {
-				sourceY = 2 + (g.clock.Tick/2+row-2)%192
+				sourceY = 2 + (g.clock.Tick+row-2)%192
 			}
 			slots[row] = sprites.ImageSlot{Image: i, Source: image.Rect(0, sourceY, 80, sourceY+1), X: float64(p.X), Y: float64(p.Y + row)}
 		}
@@ -180,8 +181,8 @@ func (g *Game) Update() error {
 	return nil
 }
 func (g *Game) Draw(dst *ebiten.Image) {
-	_ = g.lookup.Draw(g.image, g.stage)
-	op := ebiten.DrawRectShaderOptions{Images: [4]*ebiten.Image{g.stage, g.image}, Uniforms: g.uniforms, Blend: ebiten.BlendCopy}
+	_ = g.lookup.Draw(g.colored, g.stage)
+	op := ebiten.DrawRectShaderOptions{Images: [4]*ebiten.Image{g.stage, g.colored}, Uniforms: g.uniforms, Blend: ebiten.BlendCopy}
 	dst.DrawRectShader(Width, Height, g.shader, &op)
 }
 func (*Game) Layout(int, int) (int, int) { return Width, Height }
@@ -203,7 +204,10 @@ func (g *Game) Close() {
 	if g.lookup != nil {
 		g.lookup.Close()
 	}
-	for _, im := range append(g.sprites[:], g.image, g.stage) {
+	if g.shader != nil {
+		g.shader.Deallocate()
+	}
+	for _, im := range append(g.sprites[:], g.image, g.stage, g.colored) {
 		if im != nil {
 			im.Deallocate()
 		}

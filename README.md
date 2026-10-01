@@ -11,7 +11,9 @@ go run ./cmd/chonchon2
 ```
 
 Space or Escape closes the intro. The logical canvas is 320 × 200 pixels.
-Simulation runs at 50 Hz independently of the display's refresh rate.
+Simulation runs at 50 Hz independently of the display's refresh rate. Every
+simulation tick advances the scrolling and both sprite paths; no motion frames
+are skipped.
 
 The scene combines the DMA backdrop, moving panels and greetings, two animated
 bitmap objects, a colored scrolling ribbon, moving raster palettes and three

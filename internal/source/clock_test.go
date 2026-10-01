@@ -22,11 +22,43 @@ func nativeClock(t *testing.T) *Clock {
 }
 func TestNativeTransportCheckpoint(t *testing.T) {
 	c := nativeClock(t)
-	for range 100 {
+	for range 50 {
 		c.Step()
 	}
 	if c.ProfileCursor != 306 || c.MessageCursor != 88 || c.GlyphCounter != 3 || c.ScrollY != 102 {
 		t.Fatalf("native transport differs: profile=%d message=%d column=%d y=%d", c.ProfileCursor, c.MessageCursor, c.GlyphCounter, c.ScrollY)
+	}
+}
+
+func TestMotionAdvancesEverySimulationTick(t *testing.T) {
+	c := nativeClock(t)
+	for tick := 1; tick <= 50; tick++ {
+		before := c.ProfileCursor
+		c.Step()
+		if c.Tick != tick || c.ProfileCursor != before+6 {
+			t.Fatalf("motion skipped at tick %d: cursor %d -> %d", tick, before, c.ProfileCursor)
+		}
+	}
+}
+
+func TestPlanarPixels(t *testing.T) {
+	c := nativeClock(t)
+	for i := range c.Screen {
+		c.Screen[i] = byte(i*53 + 17)
+	}
+	pixels := make([]byte, 320*200*4)
+	c.Pixels(pixels)
+	for pixel := 0; pixel < 320*200; pixel++ {
+		var index byte
+		for plane := 0; plane < 4; plane++ {
+			at := pixel/16*8 + plane*2
+			word := uint16(c.Screen[at])<<8 | uint16(c.Screen[at+1])
+			index |= byte(word>>uint(15-pixel%16)&1) << plane
+		}
+		at := pixel * 4
+		if pixels[at] != index*17 || pixels[at+1] != 0 || pixels[at+2] != 0 || pixels[at+3] != 255 {
+			t.Fatalf("incorrect planar conversion at pixel %d", pixel)
+		}
 	}
 }
 func TestNativeLoopBounds(t *testing.T) {
