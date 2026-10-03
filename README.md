@@ -4,6 +4,25 @@ A Go/Ebitengine port of an Atari ST intro by **Chon-Chon of DMA**, using
 Demo Construction Kit **v1.0.13**. Native artwork and authored motion tables
 supply the screen's graphic resources.
 
+<!-- Project showcase -->
+## Screenshots
+
+[![Sliding DMA panels, multicolored scrolltext, and animated music meters](docs/media/screenshot-1.png)](docs/media/screenshot-1.png)
+
+Sliding DMA panels, multicolored scrolltext, and animated music meters.
+
+## Video
+
+[![Animated preview of Chonchon 2 Go](docs/media/preview.gif)](https://github.com/olivierh59500/go-chonchon2/raw/refs/heads/main/docs/media/preview.mp4)
+
+**[Watch or download the 24-second MP4 preview with sound](https://github.com/olivierh59500/go-chonchon2/raw/refs/heads/main/docs/media/preview.mp4)**
+
+This preview is captured from the Go production.
+
+The animated image is silent; the MP4 includes the soundtrack.
+
+<!-- End project showcase -->
+
 ## Run
 
 ```sh
